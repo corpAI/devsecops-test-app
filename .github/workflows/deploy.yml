@@ -1,0 +1,51 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - test
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        default: 'main'
+  repository_dispatch:
+    types: [deploy-request]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || github.event.client_payload.environment || 'test' }}
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || github.event.client_payload.branch || 'main' }}
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-southeast-2
+      
+      - name: Build Docker image
+        run: |
+          docker build -t test-app:${{ github.sha }} .
+      
+      - name: Deploy to ECS
+        run: |
+          echo "🚀 Deployment triggered by DevSecOps Agent"
+          echo "Environment: ${{ github.event.inputs.environment || github.event.client_payload.environment }}"
+          echo "Branch: ${{ github.event.inputs.branch || github.event.client_payload.branch }}"
+          echo "Commit: ${{ github.sha }}"
+          # Actual deployment steps will be added when infrastructure is ready
+      
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests..."
+          # Smoke tests will be added when deployment is ready
