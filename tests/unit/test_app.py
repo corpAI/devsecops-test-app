@@ -39,3 +39,25 @@ def test_version(client):
     assert response.status_code == 200
     data = response.get_json()
     assert 'version' in data
+
+def test_not_found(client):
+    """Test 404 for non-existent endpoint"""
+    response = client.get('/api/nonexistent')
+    assert response.status_code == 404
+
+def test_index_response_structure(client):
+    """Test root endpoint returns all expected fields with correct types"""
+    response = client.get('/')
+    assert response.status_code == 200
+    data = response.get_json()
+    assert 'name' in data
+    assert 'version' in data
+    assert 'environment' in data
+    assert 'status' in data
+    assert 'timestamp' in data
+    assert isinstance(data['name'], str)
+    assert isinstance(data['version'], str)
+    assert isinstance(data['environment'], str)
+    assert data['status'] == 'running'
+    # Validate timestamp is ISO format
+    assert 'T' in data['timestamp'] or data['timestamp'].count('-') >= 2
